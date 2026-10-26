@@ -38,7 +38,7 @@ with gr.Blocks(title="Water Monkey Guesthouse") as demo:
     gr.Markdown(f"# 🐒 Water Monkey Guesthouse 水猴子民宿\nAsk about rooms, prices and our rules. Model: `{MODEL}`")
     with gr.Row():
         with gr.Column(scale=3):
-            chatbot = gr.Chatbot(type="messages", height=500, label="Chat")
+            chatbot = gr.Chatbot(type="messages", height=500, label="Chat", allow_tags=False)
             box = gr.Textbox(placeholder="e.g. How much is three nights in room 203?", label="Your message")
             with gr.Row():
                 send = gr.Button("Send", variant="primary")
