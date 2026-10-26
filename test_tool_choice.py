@@ -22,6 +22,14 @@ TESTS = [
     ("What is the total for 2 nights in room 103 with my cat?", "calculate_stay"),
     ("I want to complain, the room was dirty.", "transfer_to_human"),
     ("Can you book room 204 for me next Friday?", "transfer_to_human"),
+    # Harder questions: easy to mix up
+    ("How much is a Twin room per night?", "search_rooms"),          # price per night, not a total
+    ("How much does an extra bed cost?", "get_info"),                # a rule, not a stay total
+    ("Is room 203 free?", "search_rooms"),
+    ("How much is the deposit for 2 nights in room 205?", "calculate_stay"),
+    ("The air conditioner in my room is broken.", "transfer_to_human"),
+    ("房間有吹風機嗎？", "get_info"),                                  # not in data: look it up first
+    ("What's the weather like tomorrow?", None),                     # out of scope: no tool
 ]
 
 client = make_client()
@@ -31,7 +39,7 @@ for i, (question, expected) in enumerate(TESTS, 1):
     got = first_tool_choice(client, question)
     ok = got == expected
     correct += ok
-    print(f"{i:2}. {'OK  ' if ok else 'MISS'} expected {expected:18} got {str(got):18} | {question}")
+    print(f"{i:2}. {'OK  ' if ok else 'MISS'} expected {str(expected):18} got {str(got):18} | {question}")
     time.sleep(1)  # stay under the free-tier rate limit
 
 print(f"\nScore: {correct}/{len(TESTS)} = {correct / len(TESTS):.0%}")
