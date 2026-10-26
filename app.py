@@ -83,10 +83,12 @@ def _result_html(tool, r):
     return f'<p>{escape(str(r))}</p>'
 
 
-def format_trace(trace):
+def format_trace(trace, language=None):
+    badge = (f'<div class="lang">🌐 Reply language (chosen by the program): <b>{escape(language)}</b></div>'
+             if language else "")
     if not trace:
-        return '<div class="trace-empty">No tool was used for this message.</div>'
-    cards = []
+        return badge + '<div class="trace-empty">No tool was used for this message.</div>'
+    cards = [badge]
     for i, step in enumerate(trace, 1):
         icon, label = TOOL_LABELS.get(step["tool"], ("🔧", step["tool"]))
         cards.append(
@@ -102,12 +104,12 @@ def format_trace(trace):
 def respond(user_message, history):
     if not user_message.strip():
         return "", history, gr.update()
-    reply, trace = run_agent(client, history, user_message)
+    reply, trace, language = run_agent(client, history, user_message)
     history = history + [
         {"role": "user", "content": user_message},
         {"role": "assistant", "content": reply},
     ]
-    return "", history, format_trace(trace)
+    return "", history, format_trace(trace, language)
 
 
 CSS = """
@@ -127,6 +129,7 @@ footer { display: none !important; }
 #clear { background: var(--g-bg) !important; color: var(--g-text) !important; border: 1px solid var(--g-bg) !important; }
 #trace-title { font-size: 14px; font-weight: 500; color: var(--g-muted); margin: 4px 0 8px; }
 #trace { max-height: 640px; overflow-y: auto; }
+.lang { font-size: 13px; color: var(--g-text); background: #e8f0fe; border-radius: 16px; padding: 6px 12px; margin-bottom: 12px; display: inline-block; }
 .trace-empty { color: var(--g-muted); padding: 24px; text-align: center; border: 1px dashed var(--g-border); border-radius: 12px; }
 .card { border: 1px solid var(--g-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; background: #fff; }
 .card-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }

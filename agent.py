@@ -60,15 +60,34 @@ def make_client():
     return genai.Client(api_key=api_key)
 
 
-CONFIG = types.GenerateContentConfig(
-    system_instruction=SYSTEM_PROMPT,
-    tools=TOOLS,
-    # We run the tools ourselves so that we can record the tool trace.
-    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-    temperature=0.2,
-)
+def make_config(extra_instruction=""):
+    system = SYSTEM_PROMPT + ("\n\n" + extra_instruction if extra_instruction else "")
+    return types.GenerateContentConfig(
+        system_instruction=system,
+        tools=TOOLS,
+        # We run the tools ourselves so that we can record the tool trace.
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        temperature=0.2,
+    )
+
+
+CONFIG = make_config()
 
 TOOL_MAP = {f.__name__: f for f in TOOLS}
+
+
+# ---------- reply language: decided by the program, not by the model ----------
+
+LANGUAGES = {
+    "zh": ("繁體中文", "Reply in Traditional Chinese (繁體中文). Use the room_type_zh names, for example 家庭房."),
+    "en": ("English", "Reply in English. Use the English room_type names."),
+}
+
+
+def detect_language(text):
+    """Return "zh" if the message has Chinese characters, otherwise "en"."""
+    chinese = sum(1 for ch in text if "一" <= ch <= "鿿")
+    return "zh" if chinese > 0 else "en"
 
 
 def history_to_contents(history):
@@ -82,19 +101,25 @@ def history_to_contents(history):
 
 
 def run_agent(client, history, user_message, max_steps=5):
-    """Send the message, run any tools Gemini asks for, and return (reply, trace).
+    """Send the message, run any tools Gemini asks for, and return
+    (reply, trace, language_name).
 
     trace is a list of dicts: {"tool": name, "args": {...}, "result": {...}}
     """
+    lang = detect_language(user_message)
+    language_name, language_rule = LANGUAGES[lang]
+    config = make_config(f"# Reply language for this message (set by the program)\n{language_rule}")
+    print(f"[language] {language_name}")
+
     contents = history_to_contents(history)
     contents.append(types.Content(role="user", parts=[types.Part(text=user_message)]))
     trace = []
 
     for _ in range(max_steps):
-        response = client.models.generate_content(model=MODEL, contents=contents, config=CONFIG)
+        response = client.models.generate_content(model=MODEL, contents=contents, config=config)
         calls = response.function_calls or []
         if not calls:
-            return (response.text or "").strip(), trace
+            return (response.text or "").strip(), trace, language_name
 
         contents.append(response.candidates[0].content)
         result_parts = []
@@ -110,7 +135,9 @@ def run_agent(client, history, user_message, max_steps=5):
             result_parts.append(types.Part.from_function_response(name=call.name, response={"result": result}))
         contents.append(types.Content(role="user", parts=result_parts))
 
-    return "Sorry, I could not finish that. Please contact the owner at 0912-345-678.", trace
+    sorry = {"zh": "抱歉，我無法完成這個問題，請聯絡老闆：0912-345-678。",
+             "en": "Sorry, I could not finish that. Please contact the owner at 0912-345-678."}
+    return sorry[lang], trace, language_name
 
 
 def first_tool_choice(client, question):
