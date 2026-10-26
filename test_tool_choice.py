@@ -32,14 +32,29 @@ TESTS = [
     ("What's the weather like tomorrow?", None),                     # out of scope: no tool
 ]
 
+def ask_with_retry(client, question, tries=4):
+    """Free Gemini keys allow only a few requests per minute. If we hit the
+    limit (error 429 / RESOURCE_EXHAUSTED), wait and try again."""
+    for attempt in range(1, tries + 1):
+        try:
+            return first_tool_choice(client, question)
+        except Exception as e:
+            text = str(e)
+            if ("429" in text or "RESOURCE_EXHAUSTED" in text) and attempt < tries:
+                print(f"    (rate limit reached, waiting 30 seconds, try {attempt + 1}/{tries})")
+                time.sleep(30)
+            else:
+                raise
+
+
 client = make_client()
 print(f"Tool-choice test with {MODEL}\n")
 correct = 0
 for i, (question, expected) in enumerate(TESTS, 1):
-    got = first_tool_choice(client, question)
+    got = ask_with_retry(client, question)
     ok = got == expected
     correct += ok
     print(f"{i:2}. {'OK  ' if ok else 'MISS'} expected {str(expected):18} got {str(got):18} | {question}")
-    time.sleep(1)  # stay under the free-tier rate limit
+    time.sleep(4)  # stay under the free-tier rate limit (about 15 requests per minute)
 
 print(f"\nScore: {correct}/{len(TESTS)} = {correct / len(TESTS):.0%}")
