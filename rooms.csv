@@ -1,0 +1,17 @@
+﻿room_no,room_type,room_type_zh,max_guests,price_per_night,view,pet_friendly,available
+101,Single,單人房,1,1400,garden,no,yes
+102,Single,單人房,1,1400,garden,no,no
+103,Double,雙人房,2,2200,garden,yes,yes
+104,Double,雙人房,2,2200,garden,yes,yes
+105,Twin,雙床房,2,2400,garden,no,yes
+106,Twin,雙床房,2,2400,garden,no,no
+201,Double,雙人房,2,2300,river,no,yes
+202,Double,雙人房,2,2300,river,no,no
+203,River View Double,河景雙人房,2,2800,river,no,yes
+204,River View Double,河景雙人房,2,2800,river,no,yes
+205,Twin,雙床房,2,2500,river,no,yes
+206,Family,家庭房,4,3800,garden,yes,yes
+301,Family,家庭房,4,3800,garden,yes,no
+302,Family,家庭房,4,4200,river,no,yes
+303,Family Suite,家庭套房,6,5600,river,no,yes
+304,Family Suite,家庭套房,6,5600,river,yes,no
